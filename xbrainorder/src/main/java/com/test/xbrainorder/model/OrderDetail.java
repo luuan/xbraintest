@@ -4,6 +4,8 @@ import java.io.Serializable;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
@@ -13,6 +15,7 @@ public class OrderDetail implements Serializable{
 	
 	@Id
 	@Column
+	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private int id;
 	@Column
 	private double amount;
@@ -61,11 +64,5 @@ public class OrderDetail implements Serializable{
 	
 	public void setDelivery_adress(String delivery_adress) {
 		this.delivery_adress = delivery_adress;
-	}
-
-	@Override
-	public String toString() {
-		// TODO Auto-generated method stub
-		return super.toString();
 	}
 }

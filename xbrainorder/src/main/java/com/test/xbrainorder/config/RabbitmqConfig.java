@@ -1,48 +1,48 @@
 package com.test.xbrainorder.config;
 
-import com.test.xbrainorder.listener.DeliveryListener;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
-import org.springframework.amqp.rabbit.connection.ConnectionFactory;
-import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
-import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
+import org.springframework.amqp.rabbit.listener.RabbitListenerEndpointRegistrar;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.messaging.handler.annotation.support.DefaultMessageHandlerMethodFactory;
 
 @Configuration
 public class RabbitmqConfig {
 
-	 public final static String REQUEST_QUEUE = "request-queue";
+	@Bean
+	Queue queueMessage() {
+		return new Queue("Order-Queue", false);
+	}
 
-	  @Bean
-	  Queue queue() {
-	    return new Queue(REQUEST_QUEUE, false);
-	  }
+	@Bean
+	TopicExchange exchange() {
+		return new TopicExchange("exchange");
+	}
 
-	  @Bean
-	  TopicExchange exchange() {
-	    return new TopicExchange("spring-boot-exchange");
-	  }
+	@Bean
+	Binding bindingExchangeMessage(Queue queueMessage, TopicExchange exchange) {
+		return BindingBuilder.bind(queueMessage).to(exchange).with("Order-Queue");
+	}
+	
+	@Bean
+	public MappingJackson2MessageConverter jackson2Converter() {
+		MappingJackson2MessageConverter converter = new MappingJackson2MessageConverter();
+		return converter;
+	}
 
-	  @Bean
-	  Binding binding(Queue queue, TopicExchange exchange) {
-	    return BindingBuilder.bind(queue).to(exchange).with(REQUEST_QUEUE);
-	  }
+    @Bean
+    public DefaultMessageHandlerMethodFactory myHandlerMethodFactory() {
+        DefaultMessageHandlerMethodFactory factory = new DefaultMessageHandlerMethodFactory();
+        factory.setMessageConverter(jackson2Converter());
+        return factory;
+    }
 
-	  @Bean
-	  SimpleMessageListenerContainer container(ConnectionFactory connectionFactory,
-	      MessageListenerAdapter listenerAdapter) {
-	    SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
-	    container.setConnectionFactory(connectionFactory);
-	    container.setQueueNames(REQUEST_QUEUE);
-	    container.setMessageListener(listenerAdapter);
-	    return container;
-	  }
-
-	  @Bean
-	  MessageListenerAdapter listenerAdapter(DeliveryListener receiver) {
-	    return new MessageListenerAdapter(receiver, "receiveMessage");
-	  }
+    public void configureRabbitListeners(RabbitListenerEndpointRegistrar registrar) {
+        registrar.setMessageHandlerMethodFactory(myHandlerMethodFactory());
+    }
+	  
 }
